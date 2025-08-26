@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Defuser v3 - Refactored</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="text-gray-200 flex items-center justify-center min-h-screen p-4">
+    <div class="w-full max-w-7xl bg-gray-900/50 backdrop-blur-sm rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-700 transition-all duration-300">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Code & Problem -->
+            <div class="lg:col-span-2">
+                <header class="text-left mb-6">
+                    <h1 class="text-4xl font-bold text-cyan-400 tracking-wider">X-Kernel's Code Defuser</h1>
+                    <p class="text-gray-400 mt-1">Find the bug before it's too late!</p>
+                </header>
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold mb-2 text-yellow-400">Objective:</h2>
+                    <p id="problem-description" class="bg-gray-800 p-4 rounded-md text-gray-300 border border-gray-700"></p>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold mb-2 text-blue-400">Code:</h2>
+                    <textarea id="code-editor" class="font-mono w-full h-80 p-4 bg-gray-900 text-green-400 border-2 border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all" spellcheck="false"></textarea>
+                </div>
+                <div class="mt-6 text-center">
+                    <button id="defuse-button" class="w-full md:w-1/2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg text-xl transition-transform transform hover:scale-105 shadow-lg">
+                        DEFUSE
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Column: Bomb & Status -->
+            <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center text-lg mb-4">
+                        <div>Level: <span id="level-display" class="font-bold text-white">1</span></div>
+                        <div>Score: <span id="score-display" class="font-bold text-white">0</span></div>
+                    </div>
+                    <div class="flex items-center justify-center space-x-2 my-3 md:my-0 mb-6">
+                        <span class="text-lg">Lives:</span>
+                        <div id="lives-display" class="flex space-x-1"></div>
+                    </div>
+                </div>
+                <div class="flex-grow flex flex-col items-center justify-center">
+                    <svg id="bomb-svg" width="250" height="200" viewBox="0 0 250 200" class="bomb-casing">
+                        <defs>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="3.5" result="coloredBlur"></feGaussianBlur>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"></feMergeNode>
+                                    <feMergeNode in="SourceGraphic"></feMergeNode>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <path d="M 70 90 Q 50 120 70 150" stroke="#34D399" stroke-width="5" fill="none"/>
+                        <path d="M 85 90 Q 85 130 100 155" stroke="#F87171" stroke-width="5" fill="none"/>
+                        <path d="M 165 90 Q 165 130 150 155" stroke="#60A5FA" stroke-width="5" fill="none"/>
+                        <path d="M 180 90 Q 200 120 180 150" stroke="#FBBF24" stroke-width="5" fill="none"/>
+                        <rect x="70" y="30" width="110" height="60" rx="10" fill="#374151"/>
+                        <rect x="60" y="35" width="130" height="50" rx="10" fill="#4B5563" stroke="#374151" stroke-width="2"/>
+                        <rect x="80" y="40" width="90" height="40" fill="#111827" stroke="#000" stroke-width="2"/>
+                        <text id="timer-display" x="125" y="68" font-family="Roboto Mono, monospace" font-size="24" fill="#EF4444" text-anchor="middle" filter="url(#glow)">60</text>
+                    </svg>
+                </div>
+                <div class="text-center mt-6">
+                    <div class="text-lg">Status: <span id="status-display" class="font-bold text-green-400">Active</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals Container -->
+    <div id="modal-container" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <!-- Main Win/Loss Modal -->
+        <div id="main-modal" class="hidden w-full max-w-sm bg-gray-800 rounded-2xl p-8 text-center shadow-2xl border border-gray-600">
+            <h2 id="modal-title" class="text-4xl font-bold mb-4"></h2>
+            <p id="modal-message" class="text-gray-300 mb-6"></p>
+            <div id="modal-buttons" class="flex flex-col space-y-3"></div>
+        </div>
+        <!-- Interstitial Gamble Modal -->
+        <div id="interstitial-modal" class="hidden w-full max-w-lg bg-gray-800 rounded-2xl p-8 text-center shadow-2xl border border-gray-600">
+            <h2 id="interstitial-title" class="text-3xl font-bold mb-4 text-green-400">Bomb Defused! ✅</h2>
+            <p id="interstitial-message" class="text-gray-300 mb-6"></p>
+            <div class="space-y-4">
+                <button id="gamble-time-btn" class="w-full p-4 bg-yellow-600/80 hover:bg-yellow-500/80 border border-yellow-400 rounded-lg btn-gamble">
+                    <strong class="text-white">Gamble: Double Score</strong>
+                    <p class="text-sm text-yellow-200">-50% Time on all future levels</p>
+                </button>
+                <button id="gamble-life-btn" class="w-full p-4 bg-blue-600/80 hover:bg-blue-500/80 border border-blue-400 rounded-lg btn-gamble">
+                    <strong class="text-white">Gamble: Gain Life</strong>
+                    <p class="text-sm text-blue-200">-10s Time on all future levels</p>
+                </button>
+                <button id="continue-btn" class="w-full p-3 bg-gray-600 hover:bg-gray-500 rounded-lg mt-2">
+                    Play it safe...
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="explosion-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
